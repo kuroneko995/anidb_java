@@ -2,8 +2,6 @@ package com.dnguyen.anidb;
 
 import java.util.HashMap;
 
-import javax.swing.JFileChooser;
-
 import org.jdesktop.swingx.treetable.DefaultMutableTreeTableNode;
 
 public class MyTreeTableNode extends DefaultMutableTreeTableNode {

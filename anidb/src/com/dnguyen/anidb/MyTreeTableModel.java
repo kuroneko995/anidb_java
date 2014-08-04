@@ -31,6 +31,9 @@ public class MyTreeTableModel extends DefaultTreeTableModel {
 
 	public void addAnime(MyTreeTableNode anime1) {
 		((MyTreeTableNode) super.getRoot()).addEpisode(anime1);
+		MyTreeTableNode root = (MyTreeTableNode) super.getRoot();
+		modelSupport.fireChildAdded(new TreePath(root), 
+				root.getIndex(anime1), anime1);
 		
 	}
 	
@@ -47,6 +50,8 @@ public class MyTreeTableModel extends DefaultTreeTableModel {
 		anime.setSize(anime.getSize() + episode.getSize());
 		String epName = episode.getName();
 		Boolean hasInserted = false;
+		
+		// Insert in right order
 		for (int i = 0; i < anime.getChildCount(); i++) {
 			String name2 = ((MyTreeTableNode) anime.getChildAt(i)).getName();
 			if (epName.compareTo(name2) < 0) {
@@ -62,7 +67,7 @@ public class MyTreeTableModel extends DefaultTreeTableModel {
 		if (episode.getAvailability()) {
 			anime.setAvailability(true);
 		}
-//		super.insert(ep1,  0);
+
 		TreePath animePath = new TreePath(this.getRoot());
 		modelSupport.fireChildAdded(animePath.pathByAddingChild(anime), 
 				anime.getIndex(episode), episode);

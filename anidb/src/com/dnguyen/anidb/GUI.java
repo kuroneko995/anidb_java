@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.HashMap;
 
 import javax.swing.JButton;
@@ -25,6 +24,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -32,7 +32,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
 import org.jdesktop.swingx.JXTreeTable;
-import org.jdesktop.swingx.treetable.MutableTreeTableNode;
 
 public class GUI extends JFrame implements ActionListener {
 
@@ -46,6 +45,7 @@ public class GUI extends JFrame implements ActionListener {
 	private MyTreeTableModel  mdAvailable;
 	private Database db;
 	private UDPConnector udp;
+	private ArrayList<File> currentFiles;
 	
 	private final ArrayList<String> FILE_TYPES = new ArrayList<String>(
 			Arrays.asList("avi", "mkv", "mp4"));
@@ -69,6 +69,9 @@ public class GUI extends JFrame implements ActionListener {
 	}
 	
 	public void actionPerformed(ActionEvent e) {
+		/*
+		 * Handle button click for the GUI
+		 */
 	    if ("openFolder".equals(e.getActionCommand())) {
 	        int rowNumber = treeTable.getSelectedRow();
 	        String fileName = (String) treeTable.getValueAt(rowNumber, 0);
@@ -119,6 +122,7 @@ public class GUI extends JFrame implements ActionListener {
 	        		System.out.println("File not available");
 	        	}			
 	        }
+	        
 	    } else if (e.getSource() == rdbtnShowUnavailableFiles){
 	    	if (rdbtnShowUnavailableFiles.isSelected()) {
 	    		this.treeTable.setTreeTableModel(md2);
@@ -126,28 +130,38 @@ public class GUI extends JFrame implements ActionListener {
 	    		this.treeTable.setTreeTableModel(mdAvailable);
 	    	}
 	    	setupTable(treeTable);
+	    	
 	    } else if (e.getSource() == btnAddFiles) {
             int returnVal = fc.showOpenDialog(GUI.this);
             ArrayList<File> fileList = new ArrayList<File>();
             
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                File file = fc.getSelectedFile();
-                //This is where a real application would open the file.
-                System.out.println("Opening: " + file.getAbsolutePath());
-                String fldr = file.toPath().getRoot().toString();
+                File[] selectedFiles = fc.getSelectedFiles();
+            	for (File file: selectedFiles) {
+            		
+//	            	File file = fc.getSelectedFile();
+	                //This is where a real application would open the file.
+//	                System.out.println("Opening: " + file.getAbsolutePath());
+//	                String fldr = file.toPath().getRoot().toString();
+	                
+	                fileList.add(file);
+	                for (int i = 0; i < fileList.size(); i++) {
+	                	File temp = fileList.get(i);
+	                	if (temp.isDirectory()) {
+	                		fileList.addAll(Arrays.asList(temp.listFiles()));
+	                	}
+	                }
+	                
+//	                for (File myFile:fileList) {
+//	                	this.currentFile = myFile;
+	                
+//	                }
                 
-                fileList.add(file);
-                for (int i = 0; i < fileList.size(); i++) {
-                	File temp = fileList.get(i);
-                	if (temp.isDirectory()) {
-                		fileList.addAll(Arrays.asList(temp.listFiles()));
-                	}
-                }
-                
-                for (File myFile:fileList) {
-                	addOneFile(myFile);
-                }
-                
+            	}
+            	currentFiles = fileList;
+                System.out.println("Line 158");
+                fileCheck a = new fileCheck();
+                a.execute();
             } else {
             	System.out.println("Open command cancelled by user");
             }
@@ -157,9 +171,7 @@ public class GUI extends JFrame implements ActionListener {
 	
 	
 
-	/**
-	 * Create the frame.
-	 */
+
 	public GUI() {
 		udp = new UDPConnector();
 		
@@ -197,6 +209,7 @@ public class GUI extends JFrame implements ActionListener {
 		
 		fc = new JFileChooser();
 		fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		fc.setMultiSelectionEnabled(true);
 		
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -210,9 +223,9 @@ public class GUI extends JFrame implements ActionListener {
 		textArea.setEditable(false);
 		PrintStream printStream = new PrintStream(new CustomOutputStream(textArea));
 		
-		System.setOut(printStream);
-		System.setErr(printStream);
-		System.out.println("Output stream now redirects here");
+//		System.setOut(printStream);
+//		System.setErr(printStream);
+//		System.out.println("Output stream now redirects here");
 		
 		JScrollPane text = new JScrollPane(textArea);
 		text.setMaximumSize(new Dimension(1000,100));
@@ -299,19 +312,9 @@ public class GUI extends JFrame implements ActionListener {
 	class MyTreeModelListener implements TreeModelListener {
         public void treeNodesChanged(TreeModelEvent e) {
             DefaultMutableTreeNode node;
-            node = (DefaultMutableTreeNode)(e.getTreePath().getLastPathComponent());
- 
-            /*
-             * If the event lists children, then the changed
-             * node is the child of the node we've already
-             * gotten.  Otherwise, the changed node and the
-             * specified node are the same.
-             */
- 
+            node = (DefaultMutableTreeNode)(e.getTreePath().getLastPathComponent()); 
                 int index = e.getChildIndices()[0];
-                node = (DefaultMutableTreeNode)(node.getChildAt(index));
- 
-            
+                node = (DefaultMutableTreeNode)(node.getChildAt(index));  
         }
         public void treeNodesInserted(TreeModelEvent e) {
         	
@@ -338,22 +341,28 @@ public class GUI extends JFrame implements ActionListener {
 	    }
 	}
 
-	public void hideUnavailable(Boolean doesHide) {
-		MyTreeTableNode root = (MyTreeTableNode) this.md2.getRoot();
-		Enumeration<? extends MutableTreeTableNode> children = root.children();
-		while (children.hasMoreElements()) {
-			MyTreeTableNode anime = (MyTreeTableNode) children.nextElement();
-			if (anime.getAvailability()) {
-				
-			} else {
-				
+	
+	class fileCheck extends SwingWorker<Boolean, String> {
+		
+		public fileCheck() {
+			super();
+		}
+		
+		@Override
+		public Boolean doInBackground() {
+			System.out.println("Worker running");
+			for (File file: currentFiles) {
+				addOneFile(file);
 			}
+			return true;
+			
 		}
 	}
 
+
 	public void addOneFile(File file) {
 		String fileName = file.getName();
-		String file_type = fileName.substring(fileName.length()-3);
+		String file_type = fileName.substring(fileName.length() - 3);
 		if (!file.isFile() || !FILE_TYPES.contains(file_type)) {
 			return;
 		} else {
@@ -366,7 +375,7 @@ public class GUI extends JFrame implements ActionListener {
 			
 			fileInfo = this.db.getInfoHash(size, ed2k);
 			if (fileInfo == null) {
-				System.out.println("File not found in local db. Searching anidb");
+				System.out.print("File not found in local db. Searching anidb.");
 				fileInfo = this.udp.getFileInfo(size, ed2k);
 				if (fileInfo == null) {
 					System.out.println("File cannot be identified");

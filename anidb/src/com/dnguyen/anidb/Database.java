@@ -54,13 +54,7 @@ public class Database {
 	    			+ "(filename TEXT, fid INTEGER, folder TEXT, "
 	    			+ "drive_name TEXT, last_checked DATETIME)");
 	    	
-//	    	ResultSet rs = statement.executeQuery("SELECT * FROM anime");
-//	    	while(rs.next()) {
-//	    		// read the result set
-//	    		System.out.println("name = " + rs.getString("romanji_name"));
-//	    		System.out.println("id = " + rs.getInt("aid"));
-//	    	}
-//		  connection.close();
+
 		} catch(SQLException e) {
 			System.err.println(e.getMessage());
 		    }
