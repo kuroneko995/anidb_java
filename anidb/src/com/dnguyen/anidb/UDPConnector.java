@@ -61,8 +61,16 @@ public class UDPConnector {
 			"aired_date","unused","unused","anidb_file_name","mylist_state",
 			"mylist_filestate","mylist_viewed","mylist_viewdate",
 			"mylist_storage","mylist_source","mylist_other","unused"};
+	private List<String> anime_req = new ArrayList<String>(Arrays.asList("aid", "romanji_name", "episodes", "year",
+	                                  "eng_name", "kanji_name"));
 	
-    
+	private ArrayList<String> file_req = new ArrayList<String>(Arrays.asList("fid", 
+			"aid", "eid", "gid", "size", "ed2k", "md5", "sha1","crc32", 
+			"dub", "sub", "src", "audio", "video", "res", "file_type", 
+			"group_short_name","epno","ep_name", "ep_romanji_name", 
+			"ep_kanji_name","year", "anime_total_episodes", "romanji_name", 
+			"english_name",	"kanji_name")); 
+	         
 	public UDPConnector(String anidbAddress, int anidbPort, int myPort, 
 			String username, String password) {
 		/**
@@ -165,17 +173,14 @@ public class UDPConnector {
 	}
 	
 	public HashMap<String, String> getAnimeInfo(int aid, List<String> reqFields) {
-
-		
-//        System.out.println(bitstr);
         String amask =  getMask(this.anime_amask_full, reqFields);
-//        System.out.println(amask);
         String msg = String.format("ANIME aid=%d&amask=%s&s=%s",
         		aid, amask, this.sessionID);
         this.sendMessage(msg);	
         String data = this.receiveMessage();
-//        System.out.println(data);
-        if (data.contains("230 ANIME")) { // Anime found reply
+
+        if (data.contains("230 ANIME")) { 
+        // Anime found reply
     		System.out.println("Anidb: Anime found");
     		data = data.split("\n")[1]; // Ignore first line
     		String[] fields = data.split("\\|");
@@ -184,12 +189,38 @@ public class UDPConnector {
     			result.put(reqFields.get(i), fields[i]);
     		}
     		return result;
-        } else {	// No anime found
-        	System.out.println("Anidb: Anime not found");
+        } else {	
+        // No anime found
+        	System.out.println("anidb: Anime not found.");
         	return null;
         } 
 	}
-	
+	/*
+	public Anime findAnmie(int aid) {
+		String amask =  getMask(this.anime_amask_full, reqFields);
+        String msg = String.format("ANIME aid=%d&amask=%s&s=%s",
+        		aid, amask, this.sessionID);
+        this.sendMessage(msg);	
+        String data = this.receiveMessage();
+
+        if (data.contains("230 ANIME")) { 
+        // Anime found reply
+    		System.out.println("Anidb: Anime found");
+    		data = data.split("\n")[1]; // Ignore first line
+    		String[] fields = data.split("\\|");
+    		HashMap<String, String> result = new HashMap<String, String>();
+    		for (int i = 0; i < reqFields.size(); i++) {
+    			result.put(reqFields.get(i), fields[i]);
+    		}
+    		return result;
+        } else {	
+        // No anime found
+        	System.out.println("anidb: Anime not found.");
+        	return null;
+        } 
+	}
+	*/
+	/*
 	public HashMap<String, String> getEpisodeInfo(int eid) {
 		// epno special character S(special), C(credits), T(trailer), P(parody)
 		// , O(other).
@@ -214,6 +245,7 @@ public class UDPConnector {
 		}
 		
 	}
+	*/
 	
 	public HashMap<String, String> getFileInfo(int size, String ed2k, 
 			List<String> reqFields) {
@@ -311,6 +343,76 @@ public class UDPConnector {
 		return result;
 	}
 	
+	public TableEntry findFileOnAnidb(int size, String ed2k) {
+        String fmask =  getMask(this.file_fmask_full, this.file_req);
+        String amask =  getMask(this.file_amask_full, this.file_req);
+        
+        // Format request MSG based on needed fields
+        String msg = String.format("FILE size=%d&ed2k=%s&fmask=%s&amask=%s&s=%s",
+        		size, ed2k, fmask, amask, this.sessionID); 
+        this.sendMessage(msg);
+        String data = this.receiveMessage();
+        System.out.println(data);
+        
+        if (data.contains("220 FILE")) { // File found on anidb
+        	System.out.println("Anidb: File found");
+        	data = data.split("\n")[1]; // Ignore first line of response
+    		String[] fields = data.split("\\|");
+    		for (int i = 0; i < fields.length; i++) {
+    			System.out.print(i + ":");
+    			System.out.println(fields[i]);
+    		}
+    		// Assign value to each field
+    		int aid, eid, gid, fid;
+    		String animeRomanjiName, animeEngName, animeKanjiName;
+    		String episodes, year;
+    		String epEngName, epno, epRomanjiName, epKanjiName;
+    		String md5, sha1, crc32;
+    		String dub,sub,src,audio,video,res, file_type, grp, fileName, drive_name, folder;
+    		
+    		fid = Integer.parseInt(fields[0]);
+    		aid = Integer.parseInt(fields[1]);
+    		eid = Integer.parseInt(fields[2]);
+    		gid = Integer.parseInt(fields[3]);
+    		size = Integer.parseInt(fields[4]);
+    		ed2k = fields[5];
+    		md5 = fields[6];
+    		sha1 = fields[7];
+    		crc32 = fields[8];
+    		
+    		src= fields[9];
+    		audio = fields[10];
+    		video = fields[11];
+    		res = fields[12];
+    		file_type = fields[13];
+    		dub = fields[14];
+    		sub = fields[15];
+    		episodes = fields[16];
+    		year = fields[17];
+    		
+    		animeRomanjiName = fields[19];
+    		animeKanjiName = fields[20];
+    		animeEngName = fields[21];
+    		epno = fields[22];
+    		epEngName = fields[23];
+    		epRomanjiName = fields[24];
+    		epKanjiName = fields[25];
+    		grp = fields[26];
+    				
+    		TableEntry result = new TableEntry( aid,  eid,  gid,  fid,  size,
+    				 animeRomanjiName,  animeEngName,  animeKanjiName,
+    				 episodes,  year,  epEngName,  epno, 
+    				 epRomanjiName,  epKanjiName,  ed2k,  md5, 
+    				 sha1,  crc32,  dub,  sub,  src,
+    				 audio,  video,  res,  file_type,  grp, 
+    				 "",  "",  "", "",false);
+    		return result;
+
+        } else { // No file found
+        	System.out.println("Anidb: File not found");
+        	return null;
+        }
+	}
 	
 	private String getMask(String[] full_list, List<String> req_list) {
 		/**

@@ -102,8 +102,28 @@ public class MyTreeTableModel extends DefaultTreeTableModel {
 			episode.setAvailability(isAvailable);
 			this.addEpisode(anime,episode);
 		}	
+	}
+	
+	public void addEntry(TableEntry entry) {
+		MyTreeTableNode anime;
+		if (this.hasAnime(entry.animeRomanjiName)) {
+			anime = this.getAnime(entry.animeRomanjiName);
+		} else {
+			anime = new MyTreeTableNode(entry.animeRomanjiName, entry.episodes, 0, 
+					"", true);
+			anime.setAvailability(false);
+			this.addAnime(anime);
+		}
 		
-		
+		if (anime.hasName(entry.epRomanjiName)){
+			return;
+		} else {
+			MyTreeTableNode episode = new MyTreeTableNode(entry.epRomanjiName, 
+					entry.epno, entry.size/1000000, entry.last_checked, false);
+			episode.setPath(entry.folder);
+			episode.setAvailability(entry.accessible);
+			this.addEpisode(anime,episode);
+		}	
 	}
 
 }

@@ -355,14 +355,14 @@ public class GUI extends JFrame implements ActionListener {
 		public Boolean doInBackground() {
 			System.out.println("Worker running");
 			for (File file: currentFiles) {
-				addOneFile(file);
+				addFile(file);
 			}
 			return true;
 			
 		}
 	}
 
-
+/*
 	public void addOneFile(File file) {
 		String fileName = file.getName();
 		String file_type = fileName.substring(fileName.length() - 3);
@@ -377,7 +377,7 @@ public class GUI extends JFrame implements ActionListener {
 			String drive_name = file.toPath().getRoot().toString();
 			
 			fileInfo = this.db.getInfoHash(size, ed2k);
-			System.out.println("The ed2k hash is"+ed2k);
+			System.out.println("ed2k hash: "+ed2k+ ". File size: "+ size.toString());
 			if (fileInfo == null) {
 				System.out.print("File not found in local db. Searching anidb.");
 				fileInfo = this.udp.getFileInfo(size, ed2k);
@@ -390,7 +390,7 @@ public class GUI extends JFrame implements ActionListener {
 			} else {
 				System.out.println("File found in local db");
 				int fid = Integer.parseInt(fileInfo.get("fid"));
-				LocalFile local_file = new LocalFile(fileName, fid, folder, drive_name, "never");
+				AnimeLocalFile local_file = new AnimeLocalFile(fileName, fid, folder, drive_name, "never");
 				this.db.addJob(local_file);
 				System.out.println("File has been added to database");
 				return;
@@ -436,6 +436,57 @@ public class GUI extends JFrame implements ActionListener {
 					epno, size, Database.getTimestamp(), folder, true);
 		}
 		
+	}
+	
+	*/
+	public void addFile(File file){
+		/*
+		 * TODO: Keep refractoring
+		 */
+		String fileName = file.getName();
+		String file_type = fileName.substring(fileName.length() - 3);
+		if (!file.isFile() || !FILE_TYPES.contains(file_type)) {
+			return;
+		} else {
+			System.out.println("Checking: " + file.getName());
+			TableEntry fileInfo;
+			String ed2k = Ed2k.getEd2k(file);
+			Integer size = ((int) (long) file.length()) ;
+			String folder = file.toPath().getParent().toString();
+			String drive_name = file.toPath().getRoot().toString();
+			
+			AnimeFile dbfile = this.db.findFileHash(size, ed2k);
+			System.out.println("ed2k hash: "+ed2k+ ". File size: "+ size.toString());
+			if (dbfile == null) {
+				System.out.print("File not found in local db. Searching anidb.");
+				fileInfo = this.udp.findFileOnAnidb(size, ed2k);
+				if (fileInfo == null) {
+					System.out.println("File cannot be identified");
+					return;
+				} else {
+					System.out.println("File found on anidb");
+					
+				}
+			} else {
+				System.out.println("File found in local db");
+				int fid = dbfile.fid;
+				AnimeLocalFile local_file = new AnimeLocalFile(fileName, fid, folder, drive_name, "never");
+				this.db.addJob(local_file);
+				System.out.println("File has been added to database");
+				return;
+			}
+			fileInfo.fileName = fileName;
+			fileInfo.folder = folder;
+			fileInfo.drive_name = drive_name;
+			fileInfo.accessible = true;
+			
+			this.db.addTableEntry(fileInfo);
+			
+			size = size / 1000000;
+			System.out.println("File has been added to database");
+			this.md2.addEntry(fileInfo);
+			this.mdAvailable.addEntry(fileInfo);
+		}
 	}
 	
 	private UDPConnector start_UDP(){

@@ -1,6 +1,6 @@
 package com.dnguyen.anidb;
 
-public class Episode {
+public class AnimeEpisode {
 	protected int eid;
 	protected int aid;
 	protected String epno;
@@ -8,7 +8,7 @@ public class Episode {
 	protected String romanji_name;
 	protected String kanji_name;
 	
-	public Episode(int eid, int aid, String epno, String eng_name, String romanji_name,
+	public AnimeEpisode(int eid, int aid, String epno, String eng_name, String romanji_name,
 			String kanji_name){
 		this.eid = eid;
 		this.aid = aid;
@@ -18,7 +18,7 @@ public class Episode {
 		this.kanji_name = kanji_name;
 	}
 	
-	public Episode(){
+	public AnimeEpisode(){
 		
 	}
 	

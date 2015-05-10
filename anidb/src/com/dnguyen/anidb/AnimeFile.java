@@ -1,6 +1,6 @@
 package com.dnguyen.anidb;
 
-public class File {
+public class AnimeFile {
 	protected int fid;
 	protected int eid;
 	protected int aid;
@@ -23,7 +23,7 @@ public class File {
 	protected String romanji_name;
 	protected String kanji_name;
 	
-	public File(int fid, int aid, int eid, int gid, int size, String ed2k, String md5,
+	public AnimeFile(int fid, int aid, int eid, int gid, int size, String ed2k, String md5,
 			String sha1, String crc32, String dub, String sub, String src, String audio,
 			String video, String res, String grp, String file_type){
 		this.fid = fid;

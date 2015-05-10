@@ -1,14 +1,13 @@
 package com.dnguyen.anidb;
 
-public class Anime {
+import java.sql.ResultSet;
+
+public class AnimeSeries {
 	protected int aid;
-	protected String romanji_name;
-	protected String episodes;
-	protected String year;
-	protected String eng_name;
-	protected String kanji_name;
+	protected String episodes, year;
+	protected String romanji_name, eng_name, kanji_name;
 	
-	public Anime(int aid, String episodes, String year, String romanji_name,  String eng_name,
+	public AnimeSeries(int aid, String episodes, String year, String romanji_name,  String eng_name,
 			String kanji_name){
 		this.aid = aid;
 		this.year = year;
@@ -18,7 +17,7 @@ public class Anime {
 		this.kanji_name = kanji_name;
 	}
 	
-	public Anime(){
+	public AnimeSeries(){
 		this.aid = 0;
 		this.romanji_name = "";
 		this.episodes = "";
@@ -26,5 +25,6 @@ public class Anime {
 		this.kanji_name = "";
 	}
 	
+
 	
 }

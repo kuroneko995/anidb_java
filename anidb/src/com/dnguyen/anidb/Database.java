@@ -78,7 +78,7 @@ public class Database {
 		}
 	}
 	
-	public void addAnime(Anime anime) {
+	public void addAnime(AnimeSeries anime) {
 		// TODO Unicode check
 		String AddStatement = "INSERT or IGNORE INTO anime (aid, romanji_name, "
 				+ "episodes, year, eng_name, kanji_name)" 
@@ -100,7 +100,7 @@ public class Database {
 		}
 	}
 	
-	public void addEpisode(Episode episode) {
+	public void addEpisode(AnimeEpisode episode) {
 		// TODO Unicode check
 		String AddStatement = "INSERT OR IGNORE INTO episode (eid, epno, "
 				+ "eng_name, romanji_name, kanji_name) VALUES (?,?,?,?,?)";
@@ -120,7 +120,7 @@ public class Database {
 		}
 	}
 	
-	public void addFile(File file) {
+	public void addFile(AnimeFile file) {
 		// TODO Unicode check
 		String AddStatement = "INSERT OR IGNORE INTO file "
 				+ "(fid, aid, eid, gid, size, "
@@ -156,7 +156,7 @@ public class Database {
 		}
 	}
 	
-	public void addJob(LocalFile local_file) {
+	public void addJob(AnimeLocalFile local_file) {
 		// TODO Unicode check
 		String AddStatement = "INSERT OR IGNORE INTO job (filename, fid, "
 				+ "drive_name, folder, last_checked) VALUES (?,?,?,?,?)";
@@ -174,6 +174,70 @@ public class Database {
 			System.out.println("ERROR: Cannot add episode to local database");
 			e.printStackTrace();
 		}
+	}
+	
+	public AnimeSeries toAnime(ResultSet animeTableRow) {
+		try {
+			int aid = Integer.parseInt(animeTableRow.getObject("aid").toString());
+			String episodes = animeTableRow.getObject("episodes").toString();
+			String year = animeTableRow.getObject("year").toString();
+			String romanji_name = animeTableRow.getObject("romanji_name").toString();
+			String eng_name = animeTableRow.getObject("eng_name").toString();
+			String kanji_name = animeTableRow.getObject("kanji_name").toString();
+			AnimeSeries result = new AnimeSeries(aid, episodes, year, romanji_name, eng_name, kanji_name);
+			return result;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		return null;
+	}
+	
+	public AnimeEpisode toEpisode(ResultSet animeTableRow) {
+		try {
+			int eid = Integer.parseInt(animeTableRow.getObject("eid").toString());
+			int aid = Integer.parseInt(animeTableRow.getObject("aid").toString());
+			String epno = animeTableRow.getObject("epno").toString();
+			String romanji_name = animeTableRow.getObject("romanji_name").toString();
+			String eng_name = animeTableRow.getObject("eng_name").toString();
+			String kanji_name = animeTableRow.getObject("kanji_name").toString();
+			AnimeEpisode result = new AnimeEpisode(eid, aid, epno, eng_name, romanji_name, 
+					kanji_name);
+			return result;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		return null;
+	}
+	
+	public AnimeFile toFile(ResultSet fileTableRow) {
+		try {
+			int fid = parseInt(fileTableRow.getObject("fid").toString());
+			int aid = parseInt(fileTableRow.getObject("aid").toString());
+			int eid = parseInt(fileTableRow.getObject("eid").toString());
+			int gid = parseInt(fileTableRow.getObject("gid").toString());
+			int size = parseInt(fileTableRow.getObject("size").toString());
+			String ed2k = fileTableRow.getObject("ed2k").toString();
+			String md5 = fileTableRow.getObject("md5").toString();
+			String sha1 = fileTableRow.getObject("sha1").toString();
+			String crc32 = fileTableRow.getObject("crc32").toString();
+			String dub = fileTableRow.getObject("dub").toString();
+			String sub = fileTableRow.getObject("sub").toString();
+			String src = fileTableRow.getObject("src").toString();
+			String audio = fileTableRow.getObject("audio").toString();
+			String video = fileTableRow.getObject("video").toString();
+			String res = fileTableRow.getObject("res").toString();
+			String grp = fileTableRow.getObject("grp").toString();
+			String file_type = fileTableRow.getObject("file_type").toString();
+			AnimeFile file = new AnimeFile(fid, aid, eid, gid, size, ed2k, md5, sha1, crc32, 
+					dub, sub, src, audio, video, res, grp, file_type);
+			return file;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		return null;
 	}
 	
 	public Boolean inDB(String tableName, int id) {
@@ -224,20 +288,15 @@ public class Database {
 		return null;
 	}
 	
-	public Anime findAnime(int aid){
+	public AnimeSeries findAnime(int aid){
 		String selectStatement = "SELECT * FROM anime WHERE aid = ?";
 		PreparedStatement prepStmt;
 		try {
 			prepStmt = this.connection.prepareStatement(selectStatement);
 			prepStmt.setInt(1, aid);
 			ResultSet returnTable = prepStmt.executeQuery();
-			if (returnTable.next()) {
-				String episodes = returnTable.getObject("episodes").toString();
-				String year = returnTable.getObject("year").toString();
-				String romanji_name = returnTable.getObject("romanji_name").toString();
-				String eng_name = returnTable.getObject("eng_name").toString();
-				String kanji_name = returnTable.getObject("kanji_name").toString();
-				Anime anime = new Anime(aid, episodes, year, romanji_name, eng_name, kanji_name);
+			if (returnTable.next()) {				
+				AnimeSeries anime = toAnime(returnTable);
 				return anime;
 			} else { // No result found, return blank
 				return null;
@@ -248,7 +307,7 @@ public class Database {
 		}
 		return null;
 	}
-	
+	/*
 	public HashMap<String, String> getInfoEid(int eid) {
 		HashMap<String,String> result = new HashMap<String,String>();
 		String selectStatement = "SELECT * FROM episode WHERE eid = ?";
@@ -275,8 +334,8 @@ public class Database {
 		}
 		return null;
 	}
-	
-	public Episode findEpisode(int eid){
+	*/
+	public AnimeEpisode findEpisode(int eid){
 		String selectStatement = "SELECT * FROM episode WHERE eid = ?";
 		PreparedStatement prepStmt;
 		try {
@@ -284,14 +343,7 @@ public class Database {
 			prepStmt.setInt(1, eid);
 			ResultSet returnTable = prepStmt.executeQuery();
 			if (returnTable.next()) {
-				int aid = parseInt(returnTable.getObject("aid").toString());
-				String epno = returnTable.getObject("epno").toString();
-				String romanji_name = returnTable.getObject("romanji_name").toString();
-				String eng_name = returnTable.getObject("eng_name").toString();
-				String kanji_name = returnTable.getObject("kanji_name").toString();
-				Episode episode = new Episode(eid, aid, epno, eng_name, romanji_name, 
-						kanji_name);
-				return episode;
+				return toEpisode(returnTable);
 			} else { // No result found, return blank
 				return null;
 			}
@@ -331,7 +383,7 @@ public class Database {
 		return null;
 	}
 	
-	public File findFile(int fid){
+	public AnimeFile findFile(int fid){
 		String selectStatement = "SELECT * FROM file WHERE fid = ?";
 		PreparedStatement prepStmt;
 		
@@ -340,25 +392,7 @@ public class Database {
 			prepStmt.setInt(1, fid);
 			ResultSet returnTable = prepStmt.executeQuery();
 			if (returnTable.next()) {
-				int aid = parseInt(returnTable.getObject("aid").toString());
-				int eid = parseInt(returnTable.getObject("eid").toString());
-				int gid = parseInt(returnTable.getObject("gid").toString());
-				int size = parseInt(returnTable.getObject("size").toString());
-				String ed2k = returnTable.getObject("ed2k").toString();
-				String md5 = returnTable.getObject("md5").toString();
-				String sha1 = returnTable.getObject("sha1").toString();
-				String crc32 = returnTable.getObject("crc32").toString();
-				String dub = returnTable.getObject("dub").toString();
-				String sub = returnTable.getObject("sub").toString();
-				String src = returnTable.getObject("src").toString();
-				String audio = returnTable.getObject("audio").toString();
-				String video = returnTable.getObject("video").toString();
-				String res = returnTable.getObject("res").toString();
-				String grp = returnTable.getObject("grp").toString();
-				String file_type = returnTable.getObject("file_type").toString();
-				File file = new File(fid, aid, eid, gid, size, ed2k, md5, sha1, crc32, 
-						dub, sub, src, audio, video, res, grp, file_type);
-				return file;
+				return toFile(returnTable);
 			} else { // No result found, return blank
 				return null;
 			}
@@ -400,7 +434,29 @@ public class Database {
 		return null;
 	}
 	
-	
+	public AnimeFile findFileHash(int size, String ed2k) {
+		/*
+		 * TODO: Come back and fix
+		 */
+		String selectStatement = "SELECT * FROM file WHERE (size = ? AND ed2k = ?)";
+
+		try {
+			PreparedStatement prepStmt = this.connection.prepareStatement(selectStatement);
+			prepStmt.setInt(1, size);
+			prepStmt.setString(2, ed2k);
+			ResultSet returnTable = prepStmt.executeQuery();
+			if (returnTable.next()) {
+				return toFile(returnTable);
+			} else { // No result found, return blank
+				return null;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	/*
 	public HashMap<String, String> getInfoFilename(String filename) {
 		HashMap<String,String> result = new HashMap<String,String>();
 		String selectStatement = "SELECT * FROM job WHERE filename = ?";
@@ -428,8 +484,9 @@ public class Database {
 		}
 		return null;
 	}
+	*/
 	
-	public LocalFile findLocalFile(String filename){
+	public AnimeLocalFile findLocalFile(String filename){
 		String selectStatement = "SELECT * FROM job WHERE filename = ?";
 		PreparedStatement prepStmt;
 		
@@ -442,7 +499,7 @@ public class Database {
 				String folder = returnTable.getObject("folder").toString();
 				String drive_name = returnTable.getObject("drive_name").toString();
 				String last_checked = returnTable.getObject("last_checked").toString();
-				LocalFile local_file = new LocalFile(filename, fid, folder, drive_name, 
+				AnimeLocalFile local_file = new AnimeLocalFile(filename, fid, folder, drive_name, 
 						last_checked);
 				return local_file;
 			} else { // No result found, return blank
@@ -523,16 +580,24 @@ public class Database {
 			String video, String res, String fileType, String grp, 
 			String fileName, String driveName, String folder) {
 		
-		Anime anime = new Anime(aid, episodes, year, animeRomanjiName, animeEngName, animeKanjiName);
+		AnimeSeries anime = new AnimeSeries(aid, episodes, year, animeRomanjiName, animeEngName, animeKanjiName);
 		this.addAnime(anime);
 		System.out.println("Adding episode: "+ epno);
-		Episode episode = new Episode(eid, aid, epno, epEngName, epRomanjiName, epKanjiName);
+		AnimeEpisode episode = new AnimeEpisode(eid, aid, epno, epEngName, epRomanjiName, epKanjiName);
 		this.addEpisode(episode);
-		File file = new File(fid, aid, eid, gid, size, ed2k, md5, sha1, crc32, dub, 
+		AnimeFile file = new AnimeFile(fid, aid, eid, gid, size, ed2k, md5, sha1, crc32, dub, 
 				sub, src, audio, video, res, fileType, grp);
 		this.addFile(file);
-		LocalFile local_file = new LocalFile(fileName, fid, folder, driveName, "never");
+		AnimeLocalFile local_file = new AnimeLocalFile(fileName, fid, folder, driveName, "never");
 		this.addJob(local_file);
+	}
+	
+	public void addTableEntry(TableEntry entry){
+		this.addAnime(entry.toAnimeSeries());
+		System.out.println("Adding episode: "+ entry.epno);		
+		this.addEpisode(entry.toAnimeEpisode());
+		this.addFile(entry.toAnimeFile());
+		this.addJob(entry.toAnimeLocalFile());
 	}
 	
 	public static String getTimestamp(){
