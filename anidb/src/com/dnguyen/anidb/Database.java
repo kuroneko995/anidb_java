@@ -1,5 +1,7 @@
 package com.dnguyen.anidb;
 
+import static java.lang.Integer.parseInt;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -76,8 +78,7 @@ public class Database {
 		}
 	}
 	
-	public void addAnime(int aid, String romanji_name, String episodes, 
-			String year, String eng_name, String kanji_name) {
+	public void addAnime(Anime anime) {
 		// TODO Unicode check
 		String AddStatement = "INSERT or IGNORE INTO anime (aid, romanji_name, "
 				+ "episodes, year, eng_name, kanji_name)" 
@@ -85,12 +86,12 @@ public class Database {
 		PreparedStatement prepStmt;
 		try {
 			prepStmt = this.connection.prepareStatement(AddStatement);
-			prepStmt.setInt(1, aid);
-			prepStmt.setString(2, romanji_name);
-			prepStmt.setString(3, episodes);
-			prepStmt.setString(4, year);
-			prepStmt.setString(5, eng_name);
-			prepStmt.setString(6, kanji_name);
+			prepStmt.setInt(1, anime.aid);
+			prepStmt.setString(2, anime.romanji_name);
+			prepStmt.setString(3, anime.episodes);
+			prepStmt.setString(4, anime.year);
+			prepStmt.setString(5, anime.eng_name);
+			prepStmt.setString(6, anime.kanji_name);
 			prepStmt.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -99,19 +100,18 @@ public class Database {
 		}
 	}
 	
-	public void addEpisode(int eid, String epno, String eng_name, 
-			String romanji_name, String kanji_name) {
+	public void addEpisode(Episode episode) {
 		// TODO Unicode check
 		String AddStatement = "INSERT OR IGNORE INTO episode (eid, epno, "
 				+ "eng_name, romanji_name, kanji_name) VALUES (?,?,?,?,?)";
 		PreparedStatement prepStmt;
 		try {
 			prepStmt = this.connection.prepareStatement(AddStatement);
-			prepStmt.setInt(1, eid);
-			prepStmt.setString(2, epno);
-			prepStmt.setString(3, eng_name);
-			prepStmt.setString(4, romanji_name);
-			prepStmt.setString(5, kanji_name);
+			prepStmt.setInt(1, episode.eid);
+			prepStmt.setString(2, episode.epno);
+			prepStmt.setString(3, episode.eng_name);
+			prepStmt.setString(4, episode.romanji_name);
+			prepStmt.setString(5, episode.kanji_name);
 			prepStmt.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -120,10 +120,7 @@ public class Database {
 		}
 	}
 	
-	public void addFile(int fid, int aid, int eid, int gid, int size, 
-			String ed2k, String md5, String sha1, String crc32, String dub, 
-			String sub, String src, String audio, String video, String res, 
-			String file_type, String grp) {
+	public void addFile(File file) {
 		// TODO Unicode check
 		String AddStatement = "INSERT OR IGNORE INTO file "
 				+ "(fid, aid, eid, gid, size, "
@@ -134,23 +131,23 @@ public class Database {
 		PreparedStatement prepStmt;
 		try {
 			prepStmt = this.connection.prepareStatement(AddStatement);
-			prepStmt.setInt(1, fid);
-			prepStmt.setInt(2, aid);
-			prepStmt.setInt(3, eid);
-			prepStmt.setInt(4, gid);
-			prepStmt.setInt(5, size);
-			prepStmt.setString(6, ed2k);
-			prepStmt.setString(7, md5);
-			prepStmt.setString(8, sha1);
-			prepStmt.setString(9, crc32);
-			prepStmt.setString(10, dub);
-			prepStmt.setString(11, sub);
-			prepStmt.setString(12, src);
-			prepStmt.setString(13, audio);
-			prepStmt.setString(14, video);
-			prepStmt.setString(15, res);
-			prepStmt.setString(16, file_type);
-			prepStmt.setString(17, grp);
+			prepStmt.setInt(1, file.fid);
+			prepStmt.setInt(2, file.aid);
+			prepStmt.setInt(3, file.eid);
+			prepStmt.setInt(4, file.gid);
+			prepStmt.setInt(5, file.size);
+			prepStmt.setString(6, file.ed2k);
+			prepStmt.setString(7, file.md5);
+			prepStmt.setString(8, file.sha1);
+			prepStmt.setString(9, file.crc32);
+			prepStmt.setString(10, file.dub);
+			prepStmt.setString(11, file.sub);
+			prepStmt.setString(12, file.src);
+			prepStmt.setString(13, file.audio);
+			prepStmt.setString(14, file.video);
+			prepStmt.setString(15, file.res);
+			prepStmt.setString(16, file.file_type);
+			prepStmt.setString(17, file.grp);
 			prepStmt.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -159,21 +156,17 @@ public class Database {
 		}
 	}
 	
-	public void addJob(String filename, int fid, String drive_name, 
-			String folder) {
+	public void addJob(LocalFile local_file) {
 		// TODO Unicode check
 		String AddStatement = "INSERT OR IGNORE INTO job (filename, fid, "
 				+ "drive_name, folder, last_checked) VALUES (?,?,?,?,?)";
-		PreparedStatement prepStmt;
-		
-		
-		
+		PreparedStatement prepStmt;		
 		try {
 			prepStmt = this.connection.prepareStatement(AddStatement);
-			prepStmt.setString(1, filename);
-			prepStmt.setInt(2, fid);
-			prepStmt.setString(3, drive_name);
-			prepStmt.setString(4, folder);
+			prepStmt.setString(1, local_file.filename);
+			prepStmt.setInt(2, local_file.fid);
+			prepStmt.setString(3, local_file.drive_name);
+			prepStmt.setString(4, local_file.folder);
 			prepStmt.setString(5, getTimestamp());
 			prepStmt.execute();
 		} catch (SQLException e) {
@@ -231,6 +224,31 @@ public class Database {
 		return null;
 	}
 	
+	public Anime findAnime(int aid){
+		String selectStatement = "SELECT * FROM anime WHERE aid = ?";
+		PreparedStatement prepStmt;
+		try {
+			prepStmt = this.connection.prepareStatement(selectStatement);
+			prepStmt.setInt(1, aid);
+			ResultSet returnTable = prepStmt.executeQuery();
+			if (returnTable.next()) {
+				String episodes = returnTable.getObject("episodes").toString();
+				String year = returnTable.getObject("year").toString();
+				String romanji_name = returnTable.getObject("romanji_name").toString();
+				String eng_name = returnTable.getObject("eng_name").toString();
+				String kanji_name = returnTable.getObject("kanji_name").toString();
+				Anime anime = new Anime(aid, episodes, year, romanji_name, eng_name, kanji_name);
+				return anime;
+			} else { // No result found, return blank
+				return null;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	public HashMap<String, String> getInfoEid(int eid) {
 		HashMap<String,String> result = new HashMap<String,String>();
 		String selectStatement = "SELECT * FROM episode WHERE eid = ?";
@@ -258,6 +276,34 @@ public class Database {
 		return null;
 	}
 	
+	public Episode findEpisode(int eid){
+		String selectStatement = "SELECT * FROM episode WHERE eid = ?";
+		PreparedStatement prepStmt;
+		try {
+			prepStmt = this.connection.prepareStatement(selectStatement);
+			prepStmt.setInt(1, eid);
+			ResultSet returnTable = prepStmt.executeQuery();
+			if (returnTable.next()) {
+				int aid = parseInt(returnTable.getObject("aid").toString());
+				String epno = returnTable.getObject("epno").toString();
+				String romanji_name = returnTable.getObject("romanji_name").toString();
+				String eng_name = returnTable.getObject("eng_name").toString();
+				String kanji_name = returnTable.getObject("kanji_name").toString();
+				Episode episode = new Episode(eid, aid, epno, eng_name, romanji_name, 
+						kanji_name);
+				return episode;
+			} else { // No result found, return blank
+				return null;
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	
+	}
+	
 	public HashMap<String, String> getInfoFid(int fid) {
 		HashMap<String,String> result = new HashMap<String,String>();
 		String selectStatement = "SELECT * FROM file WHERE fid = ?";
@@ -278,6 +324,44 @@ public class Database {
 			} else { // No result found, return blank
 			}
 			return result;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public File findFile(int fid){
+		String selectStatement = "SELECT * FROM file WHERE fid = ?";
+		PreparedStatement prepStmt;
+		
+		try {
+			prepStmt = this.connection.prepareStatement(selectStatement);
+			prepStmt.setInt(1, fid);
+			ResultSet returnTable = prepStmt.executeQuery();
+			if (returnTable.next()) {
+				int aid = parseInt(returnTable.getObject("aid").toString());
+				int eid = parseInt(returnTable.getObject("eid").toString());
+				int gid = parseInt(returnTable.getObject("gid").toString());
+				int size = parseInt(returnTable.getObject("size").toString());
+				String ed2k = returnTable.getObject("ed2k").toString();
+				String md5 = returnTable.getObject("md5").toString();
+				String sha1 = returnTable.getObject("sha1").toString();
+				String crc32 = returnTable.getObject("crc32").toString();
+				String dub = returnTable.getObject("dub").toString();
+				String sub = returnTable.getObject("sub").toString();
+				String src = returnTable.getObject("src").toString();
+				String audio = returnTable.getObject("audio").toString();
+				String video = returnTable.getObject("video").toString();
+				String res = returnTable.getObject("res").toString();
+				String grp = returnTable.getObject("grp").toString();
+				String file_type = returnTable.getObject("file_type").toString();
+				File file = new File(fid, aid, eid, gid, size, ed2k, md5, sha1, crc32, 
+						dub, sub, src, audio, video, res, grp, file_type);
+				return file;
+			} else { // No result found, return blank
+				return null;
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -338,6 +422,32 @@ public class Database {
 				
 			}
 			return result;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public LocalFile findLocalFile(String filename){
+		String selectStatement = "SELECT * FROM job WHERE filename = ?";
+		PreparedStatement prepStmt;
+		
+		try {
+			prepStmt = this.connection.prepareStatement(selectStatement);
+			prepStmt.setString(1, filename);
+			ResultSet returnTable = prepStmt.executeQuery();
+			if (returnTable.next()) {
+				int fid = parseInt(returnTable.getObject("fid").toString());
+				String folder = returnTable.getObject("folder").toString();
+				String drive_name = returnTable.getObject("drive_name").toString();
+				String last_checked = returnTable.getObject("last_checked").toString();
+				LocalFile local_file = new LocalFile(filename, fid, folder, drive_name, 
+						last_checked);
+				return local_file;
+			} else { // No result found, return blank
+				return null;
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -413,12 +523,16 @@ public class Database {
 			String video, String res, String fileType, String grp, 
 			String fileName, String driveName, String folder) {
 		
-		this.addAnime(aid, animeRomanjiName, episodes, year, animeEngName, animeKanjiName);
+		Anime anime = new Anime(aid, episodes, year, animeRomanjiName, animeEngName, animeKanjiName);
+		this.addAnime(anime);
 		System.out.println("Adding episode: "+ epno);
-		this.addEpisode(eid, epno, epEngName, epRomanjiName, epKanjiName);
-		this.addFile(fid, aid, eid, gid, size, ed2k, md5, sha1, crc32, dub, 
+		Episode episode = new Episode(eid, aid, epno, epEngName, epRomanjiName, epKanjiName);
+		this.addEpisode(episode);
+		File file = new File(fid, aid, eid, gid, size, ed2k, md5, sha1, crc32, dub, 
 				sub, src, audio, video, res, fileType, grp);
-		this.addJob(fileName, fid, driveName, folder);
+		this.addFile(file);
+		LocalFile local_file = new LocalFile(fileName, fid, folder, driveName, "never");
+		this.addJob(local_file);
 	}
 	
 	public static String getTimestamp(){
@@ -429,14 +543,5 @@ public class Database {
 		return ts.toString().substring(0,19);
 	}
 	
-	public static void main(String[] args) throws ClassNotFoundException {
-//		Database mydb = new Database();
-////		System.out.println(mydb.inDB("anime", 9998));
-////		mydb.getInfoFilename("[FFF] Hataraku Maou-sama! - OP04 [BD][1080p-FLAC][6E1759A3].mkv");
-////		mydb.updateJob("[FFF] Hataraku Maou-sama! - OP04 [BD][1080p-FLAC][6E1759A3].mkv");
-////		mydb.getAllJob();
-//		
-////		System.out.println(ts);
-	}
 
 }

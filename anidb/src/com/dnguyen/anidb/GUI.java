@@ -7,7 +7,9 @@ import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
@@ -15,6 +17,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Properties;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -173,7 +176,7 @@ public class GUI extends JFrame implements ActionListener {
 
 
 	public GUI() {
-		udp = new UDPConnector();
+		udp = start_UDP();
 		
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -374,6 +377,7 @@ public class GUI extends JFrame implements ActionListener {
 			String drive_name = file.toPath().getRoot().toString();
 			
 			fileInfo = this.db.getInfoHash(size, ed2k);
+			System.out.println("The ed2k hash is"+ed2k);
 			if (fileInfo == null) {
 				System.out.print("File not found in local db. Searching anidb.");
 				fileInfo = this.udp.getFileInfo(size, ed2k);
@@ -386,7 +390,8 @@ public class GUI extends JFrame implements ActionListener {
 			} else {
 				System.out.println("File found in local db");
 				int fid = Integer.parseInt(fileInfo.get("fid"));
-				this.db.addJob(fileName, fid, drive_name, folder);
+				LocalFile local_file = new LocalFile(fileName, fid, folder, drive_name, "never");
+				this.db.addJob(local_file);
 				System.out.println("File has been added to database");
 				return;
 			}
@@ -431,5 +436,38 @@ public class GUI extends JFrame implements ActionListener {
 					epno, size, Database.getTimestamp(), folder, true);
 		}
 		
+	}
+	
+	private UDPConnector start_UDP(){
+		Properties prop = new Properties();
+		InputStream input = null;
+		try {
+			input = new FileInputStream("config.properties");
+			prop.load(input);
+			
+			// Load config file
+			String anidbAddress = prop.getProperty("anidbAddress");
+			int anidbPort = Integer.parseInt(prop.getProperty("anidbPort"));
+			int myPort = Integer.parseInt(prop.getProperty("myPort"));
+			String username = prop.getProperty("username");
+			String password = prop.getProperty("password");
+		
+			UDPConnector new_connection = new UDPConnector(anidbAddress, anidbPort, myPort,
+					username, password);
+			return new_connection;
+			
+			
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			if (input != null) {
+				try {
+					input.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return null;
 	}
 }

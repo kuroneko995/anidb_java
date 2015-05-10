@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -16,67 +17,101 @@ import java.util.Properties;
 
 
 public class UDPConnector {
+	/**
+	 * A class that handles all communication with anidb.net server via their UDP API
+	 * Refer here for anidb.net API
+	 * http://wiki.anidb.net/w/UDP_API_Definition#Authing_Commands
+	 * 
+	 */
 	private int anidbPort, myPort;
 	private String anidbAddress;
 	private String sessionID;
 	private String username, password;
 	private DatagramSocket udpSocket = null;
 	private long timer;
-	public UDPConnector() {
+	
+	private String[] anime_amask_full = {"aid","unused","year","type","related_aid_list",
+		      "related_aid_type","category_list","category_weight_list",
+		      "romanji_name","kanji_name","eng_name","other_name",
+		      "short_name_list","synonym_list","retired","retired","episodes",
+		      "highest_episode_number","special_ep_count","air_date","end_date",
+		      "url","picname","category_id_list","rating","vote_count",
+		      "temp_rating","temp_vote_count","average_review_rating",
+		      "review_count","award_list","is_18_restricted","anime_planet_id",
+		      "ANN_id","allcinema_id","AnimeNfo_id","unused","unused","unused",
+		      "date_record_updated","character_id_list","creator_id_list",
+		      "main_creator_id_list","main_creator_name_list","unused","unused",
+		      "unused","unused","specials_count","credits_count","other_count",
+		      "trailer_count","parody_count","unused","unused","unused"};
+	
+    private String [] file_amask_full = {"anime_total_episodes","highest_episode_number",
+    		"year","file_type","related_aid_list","related_aid_type",
+    		"category_list","reserved","romanji_name","kanji_name",
+    		"english_name","other_name","short_name_list","synonym_list",
+    		"retired","retired","epno","ep_name","ep_romanji_name",
+    		"ep_kanji_name","episode_rating","episode_vote_count","unused",
+    		"unused","group_name","group_short_name","unused","unused",
+    		"unused","unused","unused","date_aid_record_updated"};
+    
+    private String[] file_fmask_full = {"unused","aid","eid","gid","mylist_id",
+			"list_other_episodes","IsDeprecated","state","size","ed2k",
+			"md5","sha1","crc32","unused","unused","reserved","quality",
+			"src","audio","audio_bitrate_list","video","video_bitrate",
+			"res","file_type","dub","sub","length_in_seconds","description",
+			"aired_date","unused","unused","anidb_file_name","mylist_state",
+			"mylist_filestate","mylist_viewed","mylist_viewdate",
+			"mylist_storage","mylist_source","mylist_other","unused"};
+	
+    
+	public UDPConnector(String anidbAddress, int anidbPort, int myPort, 
+			String username, String password) {
 		/**
 		 * Set up the UDP Connector. Load address and port from 
 		 * config.properties. 
 		 * Also load anidb username and password
 		 */
-		Properties prop = new Properties();
-		InputStream input = null;
-		try {
-			input = new FileInputStream("config.properties");
-			prop.load(input);
-	 
-			// Load config file
-			anidbAddress = prop.getProperty("anidbAddress");
-			anidbPort = Integer.parseInt(prop.getProperty("anidbPort"));
-			myPort = Integer.parseInt(prop.getProperty("myPort"));
-			username = prop.getProperty("username");
-			password = prop.getProperty("password");
-			
-			// Initialize a datagram socket
+		this.anidbAddress = anidbAddress;
+		this.anidbPort = anidbPort;
+		this.myPort = myPort;
+		this.username = username;
+		this.password = password;
+		
+		
+		// Initialize a datagram socket
+		try { 
 			udpSocket = new DatagramSocket(myPort);
-			
-			// Start timer
-			timer = System.currentTimeMillis();
-			
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		} finally {
-			if (input != null) {
-				try {
-					input.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
+		} catch (SocketException e) {
+			System.out.println("Could not create socket");
+			e.printStackTrace();
 		}
+		
+		// Start timer
+		timer = System.currentTimeMillis();
 	 
 	}
 	
-	public void authenticate() {
+	
+	public Boolean authenticate() {
 		/**
 		 * Authenticate to anidb using username and password in config files
 		 * Set the session ID for the UDP Connector
 		 * TODO: Add automatic pinging to keep connection alive
 		 */
-		String msg;
-		msg = String.format("AUTH user=%s&pass=%s&protover=3&"
-				+ "client=anidbfilemanager&clientver=0&"
-				+ "nat=1&enc=utf-8",this.username, this.password);
+		String msg = String.format("AUTH user=%s&pass=%s&protover=3&"
+					+ "client=anidbfilemanager&clientver=0&"
+					+ "nat=1&enc=utf-8",this.username, this.password);
 		this.sendMessage(msg);
 		String message = this.receiveMessage();
+		
 		String[] data = message.split(" ");
-//		System.out.println(data[1]);
-		System.out.println("Authentication successful");
-		this.sessionID = data[1];
+		if (data[0].equals("200")) {
+			System.out.println("Authentication successful");
+			this.sessionID = data[1];
+			return true;
+		} else {
+			System.out.println("Authentication failed: " + message);
+			return false;
+		}
 	}
 	
 	public String receiveMessage() {
@@ -130,31 +165,10 @@ public class UDPConnector {
 	}
 	
 	public HashMap<String, String> getAnimeInfo(int aid, List<String> reqFields) {
-		String[] map = {"aid","unused","year","type","related_aid_list",
-		      "related_aid_type","category_list","category_weight_list",
-		      "romanji_name","kanji_name","eng_name","other_name",
-		      "short_name_list","synonym_list","retired","retired","episodes",
-		      "highest_episode_number","special_ep_count","air_date","end_date",
-		      "url","picname","category_id_list","rating","vote_count",
-		      "temp_rating","temp_vote_count","average_review_rating",
-		      "review_count","award_list","is_18_restricted","anime_planet_id",
-		      "ANN_id","allcinema_id","AnimeNfo_id","unused","unused","unused",
-		      "date_record_updated","character_id_list","creator_id_list",
-		      "main_creator_id_list","main_creator_name_list","unused","unused",
-		      "unused","unused","specials_count","credits_count","other_count",
-		      "trailer_count","parody_count","unused","unused","unused"};
-		String bitstr = "";
+
 		
-		// Go through map to determine which field to request from anidb
-        for (int i = 0; i < map.length; i++) {
-        	if (reqFields.contains(map[i])) {
-        		bitstr += "1";
-        	} else {
-        		bitstr += "0";
-        	}
-        }
 //        System.out.println(bitstr);
-        String amask =  String.format("%014X", Long.parseLong(bitstr,2));
+        String amask =  getMask(this.anime_amask_full, reqFields);
 //        System.out.println(amask);
         String msg = String.format("ANIME aid=%d&amask=%s&s=%s",
         		aid, amask, this.sessionID);
@@ -255,7 +269,7 @@ public class UDPConnector {
         		size, ed2k, fmask, amask, this.sessionID); 
         this.sendMessage(msg);
         String data = this.receiveMessage();
-//        System.out.println(data);
+        System.out.println(data);
         if (data.contains("220 FILE")) { // File found on anidb
         	System.out.println("Anidb: File found");
         	data = data.split("\n")[1]; // Ignore first line of response
@@ -297,12 +311,19 @@ public class UDPConnector {
 		return result;
 	}
 	
-	public static void main(String[] args) {
-		UDPConnector udp = new UDPConnector();
-		udp.authenticate();
-		
-		udp.getFileInfo(113749678,"907dbdd4791e53ddaf04381fe60ba845");
-		udp.close();
-		
+	
+	private String getMask(String[] full_list, List<String> req_list) {
+		/**
+		 * Return a hex string that serves as the bit mask for the request.
+		 */
+		String result = "";
+		for (int i = 0; i < full_list.length; i++) {
+	    	if (req_list.contains(full_list[i])) {
+	    		result += "1";
+	    	} else {
+	    		result += "0";
+	    	}
+	    }
+		return String.format("%08X", Long.parseLong(result,2));
 	}
 }
