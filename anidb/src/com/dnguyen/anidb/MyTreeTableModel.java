@@ -118,7 +118,7 @@ public class MyTreeTableModel extends DefaultTreeTableModel {
 		if (anime.hasName(entry.epRomanjiName)){
 			return;
 		} else {
-			MyTreeTableNode episode = new MyTreeTableNode(entry.epRomanjiName, 
+			MyTreeTableNode episode = new MyTreeTableNode(entry.epEngName, 
 					entry.epno, entry.size/1000000, entry.last_checked, false);
 			episode.setPath(entry.folder);
 			episode.setAvailability(entry.accessible);

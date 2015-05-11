@@ -286,27 +286,17 @@ public class GUI extends JFrame implements ActionListener {
 	}
 	
 	public static void getJobFromDatabase(
-			ArrayList<HashMap<String,String>> allJob, MyTreeTableModel md2, Boolean showUnavailable) {
-		for (HashMap<String,String> job: allJob) {
+			ArrayList<TableEntry> allJob, MyTreeTableModel md2, Boolean showUnavailable) {
+		for (TableEntry entry: allJob) {
 //			{"anime_name", "anime_episodes", "epno", "ep_name", "fid", 
 //		          "file_name", "folder", "last_checked", "size"}
-			
-			String animeName = job.get("anime_name");
-			String fileName = job.get("file_name");
-			String epNumber = job.get("epno");
-			String lastChecked = job.get("last_checked");
-			int size = (Integer.parseInt(job.get("size"))) / 1000000 ;
-			String filePath = job.get("folder");
-			String animeEps = job.get("anime_episodes");
-			
-		
-			File file = new File (filePath);
-			Boolean isAvailable = file.isDirectory();
+
+			File file = new File (entry.folder);
+			entry.accessible = file.isDirectory();
 
         	
-        	if (showUnavailable || isAvailable) {
-				md2.addEntry(animeName, animeEps, fileName, epNumber, size, 
-						lastChecked, filePath, isAvailable);
+        	if (showUnavailable || entry.accessible) {
+				md2.addEntry(entry);
         	}
 		}
 		

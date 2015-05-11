@@ -172,6 +172,7 @@ public class UDPConnector {
 		this.timer = System.currentTimeMillis();
 	}
 	
+	/*
 	public HashMap<String, String> getAnimeInfo(int aid, List<String> reqFields) {
         String amask =  getMask(this.anime_amask_full, reqFields);
         String msg = String.format("ANIME aid=%d&amask=%s&s=%s",
@@ -195,6 +196,8 @@ public class UDPConnector {
         	return null;
         } 
 	}
+	*/
+	
 	/*
 	public Anime findAnmie(int aid) {
 		String amask =  getMask(this.anime_amask_full, reqFields);
@@ -247,6 +250,7 @@ public class UDPConnector {
 	}
 	*/
 	
+	/*
 	public HashMap<String, String> getFileInfo(int size, String ed2k, 
 			List<String> reqFields) {
 		String fbitstr = "";
@@ -327,11 +331,11 @@ public class UDPConnector {
         	return null;
         }
 	}
+	*/
 	
+	/*
 	public HashMap<String, String> getFileInfo(int size, String ed2k) {
-		/*
-		 * Request default fields
-		 */
+		
 		ArrayList<String> req_fields = new ArrayList<String>(Arrays.asList("fid", 
 				"aid", "eid", "gid", "size", "ed2k", "md5", "sha1","crc32", 
 				"dub", "sub", "src", "audio", "video", "res", "file_type", 
@@ -342,7 +346,7 @@ public class UDPConnector {
 //		System.out.println(result);
 		return result;
 	}
-	
+	*/
 	public TableEntry findFileOnAnidb(int size, String ed2k) {
         String fmask =  getMask(this.file_fmask_full, this.file_req);
         String amask =  getMask(this.file_amask_full, this.file_req);
@@ -352,23 +356,19 @@ public class UDPConnector {
         		size, ed2k, fmask, amask, this.sessionID); 
         this.sendMessage(msg);
         String data = this.receiveMessage();
-        System.out.println(data);
         
         if (data.contains("220 FILE")) { // File found on anidb
         	System.out.println("Anidb: File found");
         	data = data.split("\n")[1]; // Ignore first line of response
     		String[] fields = data.split("\\|");
-    		for (int i = 0; i < fields.length; i++) {
-    			System.out.print(i + ":");
-    			System.out.println(fields[i]);
-    		}
+    		
     		// Assign value to each field
     		int aid, eid, gid, fid;
     		String animeRomanjiName, animeEngName, animeKanjiName;
     		String episodes, year;
     		String epEngName, epno, epRomanjiName, epKanjiName;
     		String md5, sha1, crc32;
-    		String dub,sub,src,audio,video,res, file_type, grp, fileName, drive_name, folder;
+    		String dub,sub,src,audio,video,res, file_type, grp;
     		
     		fid = Integer.parseInt(fields[0]);
     		aid = Integer.parseInt(fields[1]);

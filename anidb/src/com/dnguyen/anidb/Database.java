@@ -261,7 +261,7 @@ public class Database {
 			return false;
 		}
 	}
-	
+	/*
 	public HashMap<String, String> getInfoAid(int aid) {
 		HashMap<String,String> result = new HashMap<String,String>();
 		String selectStatement = "SELECT * FROM anime WHERE aid = ?";
@@ -335,6 +335,7 @@ public class Database {
 		return null;
 	}
 	*/
+	
 	public AnimeEpisode findEpisode(int eid){
 		String selectStatement = "SELECT * FROM episode WHERE eid = ?";
 		PreparedStatement prepStmt;
@@ -356,6 +357,7 @@ public class Database {
 	
 	}
 	
+	/*
 	public HashMap<String, String> getInfoFid(int fid) {
 		HashMap<String,String> result = new HashMap<String,String>();
 		String selectStatement = "SELECT * FROM file WHERE fid = ?";
@@ -382,7 +384,7 @@ public class Database {
 		}
 		return null;
 	}
-	
+	*/
 	public AnimeFile findFile(int fid){
 		String selectStatement = "SELECT * FROM file WHERE fid = ?";
 		PreparedStatement prepStmt;
@@ -402,7 +404,7 @@ public class Database {
 		}
 		return null;
 	}
-	
+	/*
 	public HashMap<String, String> getInfoHash(int size, String ed2k) {
 		HashMap<String,String> result = new HashMap<String,String>();
 		String selectStatement = "SELECT * FROM file WHERE (size = ? AND "
@@ -433,7 +435,7 @@ public class Database {
 		}
 		return null;
 	}
-	
+	*/
 	public AnimeFile findFileHash(int size, String ed2k) {
 		/*
 		 * TODO: Come back and fix
@@ -533,8 +535,8 @@ public class Database {
 		
 	}
 	
-	public ArrayList<HashMap<String,String>> getAllJob() {
-		ArrayList<HashMap<String,String>> result;
+	public ArrayList<TableEntry> getAllJob() {
+		ArrayList<TableEntry> result;
 		String selectStatement = "SELECT anime.romanji_name, anime.episodes,"
 				+ "episode.epno, episode.eng_name, file.fid, job.filename, "
 				+ "job.folder, job.last_checked, file.size FROM anime, episode, "
@@ -547,17 +549,30 @@ public class Database {
 			ResultSet returnTable;
 			returnTable = this.statement.executeQuery(selectStatement);
 			int size = returnTable.getFetchSize();
-			result = new ArrayList<HashMap<String,String>>(size);
+			result = new ArrayList<TableEntry>(size);
 			int index = 0;
 			HashMap<String, String> temp;
 			while (returnTable.next()) {
-				temp = new HashMap<String,String>();
-				for (int i = 0; i < req_fields.length; i++) {
-					String field = req_fields[i];
-					String data = returnTable.getObject(i+1).toString();
-					temp.put(field, data);	
-				}
-				result.add(index,temp);
+				String anime_name = returnTable.getObject("romanji_name").toString();
+				String anime_episodes = returnTable.getObject("episodes").toString();
+				String epno = returnTable.getObject("epno").toString();
+				String ep_name = returnTable.getObject("eng_name").toString();
+				int fid = Integer.parseInt(returnTable.getObject("fid").toString());
+				String file_name = returnTable.getObject("filename").toString();
+				String folder = returnTable.getObject("folder").toString();
+				String last_checked = returnTable.getObject("last_checked").toString();
+				int file_size = Integer.parseInt(returnTable.getObject("size").toString());
+				
+				TableEntry entry = new TableEntry( 0,  0,  0,  fid,  file_size,
+						anime_name,  "",  "",
+						anime_episodes,  "",  ep_name,  epno, 
+	    				 "",  "",  "",  "", 
+	    				 "",  "",  "",  "",  "",
+	    				 "",  "",  "",  "",  "", 
+	    				 file_name,  "",  folder, last_checked,false);
+		
+				
+				result.add(index,entry);
 				index++;
 				
 			}
@@ -571,7 +586,7 @@ public class Database {
 		return null;
 		
 	}
-	
+	/*
 	public void addEntry(int aid, int eid, int gid, int fid, String animeRomanjiName, 
 			String episodes, String year, String animeEngName, String animeKanjiName,
 			String epEngName, String epno, String epRomanjiName, 
@@ -591,7 +606,7 @@ public class Database {
 		AnimeLocalFile local_file = new AnimeLocalFile(fileName, fid, folder, driveName, "never");
 		this.addJob(local_file);
 	}
-	
+	*/
 	public void addTableEntry(TableEntry entry){
 		this.addAnime(entry.toAnimeSeries());
 		System.out.println("Adding episode: "+ entry.epno);		

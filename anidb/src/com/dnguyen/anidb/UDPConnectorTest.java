@@ -99,11 +99,12 @@ public class UDPConnectorTest {
 		// http://anidb.net/perl-bin/animedb.pl?show=file&fid=1581396
 		UDPConnector new_connection = new UDPConnector("api.anidb.net", 9000, 1500,
 				"ndminh92", "9AkoOzsS9xUg8z");
-		HashMap<String,String> file_info = new_connection.getFileInfo(size,ed2k);
-		assertEquals(file_info.get("fid"), 1581396);
-		assertEquals(file_info.get("romanji_name"), 
+		new_connection.authenticate();
+		TableEntry file_info = new_connection.findFileOnAnidb(size,ed2k);
+		assertEquals(file_info.fid, 1581396);
+		assertEquals(file_info.animeRomanjiName, 
 				"Yahari Ore no Seishun Lovecome wa Machigatte Iru. Zoku");
-		assertEquals(file_info.get("ep_romanji_name"), 
+		assertEquals(file_info.epRomanjiName, 
 				"Soshite, Yuigahama Yui wa Sengensuru.");
 		
 		new_connection.close();
